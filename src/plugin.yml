@@ -1,0 +1,4 @@
+name: NoMemLeak
+main: ru.violence.nomemleak.NoMemLeakPlugin
+version: 0.1.0
+softdepend: [AAC, Essentials]
