@@ -1,7 +1,9 @@
 package ru.violence.nomemleak;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.spigotmc.SpigotConfig;
 import ru.violence.nomemleak.task.AACTask;
+import ru.violence.nomemleak.task.CriterionTriggersTask;
 import ru.violence.nomemleak.task.EntityTrackerTask;
 import ru.violence.nomemleak.task.EssentialsTask;
 import ru.violence.nomemleak.task.WorldGenMineshaftTask;
@@ -12,6 +14,9 @@ public class NoMemLeakPlugin extends JavaPlugin {
         try {
             new EntityTrackerTask(this).runTaskTimer(this, 0, 5 * 60 * 20);
             new WorldGenMineshaftTask(this).runTaskTimer(this, 0, 5 * 60 * 20);
+            if (!SpigotConfig.disabledAdvancements.contains("*")) {
+                new CriterionTriggersTask(this).runTaskTimer(this, 0, 5 * 60 * 20);
+            }
 
             if (getServer().getPluginManager().isPluginEnabled("Essentials")) {
                 new EssentialsTask(this).runTaskTimerAsynchronously(this, 0, 5 * 60 * 20);
