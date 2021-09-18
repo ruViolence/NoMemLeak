@@ -2,73 +2,67 @@ package ru.violence.nomemleak.task;
 
 import co.aikar.timings.TimedChunkGenerator;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import lombok.SneakyThrows;
 import net.minecraft.server.v1_12_R1.ChunkGenerator;
 import net.minecraft.server.v1_12_R1.ChunkProviderGenerate;
 import net.minecraft.server.v1_12_R1.ChunkProviderServer;
-import net.minecraft.server.v1_12_R1.IChunkProvider;
 import net.minecraft.server.v1_12_R1.PersistentStructure;
 import net.minecraft.server.v1_12_R1.StructureGenerator;
 import net.minecraft.server.v1_12_R1.StructureStart;
 import net.minecraft.server.v1_12_R1.World;
 import net.minecraft.server.v1_12_R1.WorldGenMineshaft;
+import net.minecraft.server.v1_12_R1.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_12_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_12_R1.generator.InternalChunkGenerator;
 import org.bukkit.craftbukkit.v1_12_R1.generator.NormalChunkGenerator;
 import org.bukkit.scheduler.BukkitRunnable;
 import ru.violence.nomemleak.NoMemLeakPlugin;
+import ru.violence.nomemleak.Utils;
 
 import java.lang.reflect.Field;
 
 public class WorldGenMineshaftTask extends BukkitRunnable {
     private final NoMemLeakPlugin plugin;
-    private final Field chunkProviderField;
-    private final Field chunkGeneratorField;
-    private final Field timedGeneratorField;
-    private final Field generatorField;
-    private final Field yField;
-    private final Field aField;
-    private final Field cField;
-    private final Field allStructuresField;
+    private final Field field_chunkGenerator_ChunkProviderServer;
+    private final Field field_timedGenerator_TimedChunkGenerator;
+    private final Field field_generator_NormalChunkGenerator;
+    private final Field field_y_ChunkProviderGenerate;
+    private final Field field_a_StructureGenerator;
+    private final Field field_c_StructureGenerator;
+    private final Field field_allStructures_StructureGenerator;
 
     public WorldGenMineshaftTask(NoMemLeakPlugin plugin) throws Exception {
         this.plugin = plugin;
-        this.chunkProviderField = net.minecraft.server.v1_12_R1.World.class.getDeclaredField("chunkProvider");
-        this.chunkProviderField.setAccessible(true);
-        this.chunkGeneratorField = ChunkProviderServer.class.getDeclaredField("chunkGenerator");
-        this.chunkGeneratorField.setAccessible(true);
-        this.timedGeneratorField = TimedChunkGenerator.class.getDeclaredField("timedGenerator");
-        this.timedGeneratorField.setAccessible(true);
-        this.generatorField = NormalChunkGenerator.class.getDeclaredField("generator");
-        this.generatorField.setAccessible(true);
-        this.yField = ChunkProviderGenerate.class.getDeclaredField("y");
-        this.yField.setAccessible(true);
-        this.aField = StructureGenerator.class.getDeclaredField("a");
-        this.aField.setAccessible(true);
-        this.cField = StructureGenerator.class.getDeclaredField("c");
-        this.cField.setAccessible(true);
-        this.allStructuresField = StructureGenerator.class.getDeclaredField("allStructures");
-        this.allStructuresField.setAccessible(true);
+        this.field_chunkGenerator_ChunkProviderServer = Utils.getFieldAccessible(ChunkProviderServer.class, "chunkGenerator");
+        this.field_timedGenerator_TimedChunkGenerator = Utils.getFieldAccessible(TimedChunkGenerator.class, "timedGenerator");
+        this.field_generator_NormalChunkGenerator = Utils.getFieldAccessible(NormalChunkGenerator.class, "generator");
+        this.field_y_ChunkProviderGenerate = Utils.getFieldAccessible(ChunkProviderGenerate.class, "y");
+        this.field_a_StructureGenerator = Utils.getFieldAccessible(StructureGenerator.class, "a");
+        this.field_c_StructureGenerator = Utils.getFieldAccessible(StructureGenerator.class, "c");
+        this.field_allStructures_StructureGenerator = Utils.getFieldAccessible(StructureGenerator.class, "allStructures");
     }
 
     @Override
+    @SneakyThrows
     public void run() {
         int removed = 0;
 
-        for (org.bukkit.World world : Bukkit.getWorlds()) {
-            ChunkProviderServer chunkProvider = (ChunkProviderServer) getIChunkProvider(((CraftWorld) world).getHandle());
-            TimedChunkGenerator timedChunkGenerator = (TimedChunkGenerator) getChunkGenerator(chunkProvider);
-            InternalChunkGenerator internalChunkGenerator = getTimedGenerator(timedChunkGenerator);
+        for (org.bukkit.World bukkitWorld : Bukkit.getWorlds()) {
+            WorldServer world = ((CraftWorld) bukkitWorld).getHandle();
+            ChunkProviderServer chunkProvider = (ChunkProviderServer) ((World) world).getChunkProvider();
+            TimedChunkGenerator timedChunkGenerator = (TimedChunkGenerator) this.field_chunkGenerator_ChunkProviderServer.get(chunkProvider);
+            InternalChunkGenerator internalChunkGenerator = (InternalChunkGenerator) this.field_timedGenerator_TimedChunkGenerator.get(timedChunkGenerator);
 
             // Skip non-normal chunk generators
             if (!(internalChunkGenerator instanceof NormalChunkGenerator)) continue;
 
-            ChunkGenerator chunkGenerator = getGenerator((NormalChunkGenerator) internalChunkGenerator);
+            ChunkGenerator chunkGenerator = (ChunkGenerator) this.field_generator_NormalChunkGenerator.get(internalChunkGenerator);
 
             if (!(chunkGenerator instanceof ChunkProviderGenerate)) continue;
 
             ChunkProviderGenerate chunkProviderGenerate = (ChunkProviderGenerate) chunkGenerator;
-            WorldGenMineshaft worldGenMineshaft = getY(chunkProviderGenerate);
+            WorldGenMineshaft worldGenMineshaft = (WorldGenMineshaft) this.field_y_ChunkProviderGenerate.get(chunkProviderGenerate);
 
             removed += clearStructureGenerator(worldGenMineshaft);
         }
@@ -76,66 +70,23 @@ public class WorldGenMineshaftTask extends BukkitRunnable {
         this.plugin.logCleared("WorldGenMineshaft", removed);
     }
 
-    public IChunkProvider getIChunkProvider(World world) {
-        try {
-            return (IChunkProvider) this.chunkProviderField.get(world);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public ChunkGenerator getChunkGenerator(ChunkProviderServer chunkProviderServer) {
-        try {
-            return (ChunkGenerator) this.chunkGeneratorField.get(chunkProviderServer);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public InternalChunkGenerator getTimedGenerator(TimedChunkGenerator timedChunkGenerator) {
-        try {
-            return (InternalChunkGenerator) this.timedGeneratorField.get(timedChunkGenerator);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public ChunkGenerator getGenerator(NormalChunkGenerator normalChunkGenerator) {
-        try {
-            return (ChunkGenerator) this.generatorField.get(normalChunkGenerator);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public WorldGenMineshaft getY(ChunkProviderGenerate chunkProviderGenerate) {
-        try {
-            return (WorldGenMineshaft) this.yField.get(chunkProviderGenerate);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @SuppressWarnings("unchecked")
+    @SneakyThrows
     public int clearStructureGenerator(StructureGenerator structureGenerator) {
-        try {
-            int cleared = 0;
+        int cleared = 0;
 
-            PersistentStructure a = (PersistentStructure) this.aField.get(structureGenerator);
-            Long2ObjectMap<StructureStart> c = (Long2ObjectMap<StructureStart>) this.cField.get(structureGenerator);
-            Long2ObjectMap<StructureStart> allStructures = (Long2ObjectMap<StructureStart>) this.allStructuresField.get(structureGenerator);
+        PersistentStructure a = (PersistentStructure) this.field_a_StructureGenerator.get(structureGenerator);
+        Long2ObjectMap<StructureStart> c = (Long2ObjectMap<StructureStart>) this.field_c_StructureGenerator.get(structureGenerator);
+        Long2ObjectMap<StructureStart> allStructures = (Long2ObjectMap<StructureStart>) this.field_allStructures_StructureGenerator.get(structureGenerator);
 
-            cleared += a.a().map.size();
-            cleared += c.size();
-            cleared += allStructures.size();
+        cleared += a.a().map.size();
+        cleared += c.size();
+        cleared += allStructures.size();
 
-            a.a().map.clear();
-            c.clear();
-            allStructures.clear();
+        a.a().map.clear();
+        c.clear();
+        allStructures.clear();
 
-            return cleared;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return cleared;
     }
 }
