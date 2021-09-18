@@ -7,7 +7,7 @@ import java.lang.reflect.Field;
 @UtilityClass
 public class Utils {
     public Field getFieldAccessible(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-        Field field = clazz.getField(fieldName);
+        Field field = clazz.getDeclaredField(fieldName);
         field.setAccessible(true);
         return field;
     }
