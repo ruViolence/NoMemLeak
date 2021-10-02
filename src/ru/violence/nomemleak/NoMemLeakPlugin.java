@@ -12,18 +12,18 @@ public class NoMemLeakPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
-            new EntityTrackerTask(this).runTaskTimer(this, 0, 5 * 60 * 20);
-            new WorldGenMineshaftTask(this).runTaskTimer(this, 0, 5 * 60 * 20);
+            new EntityTrackerTask(this).runTaskTimer(this, 20, 5 * 60 * 20);
+            new WorldGenMineshaftTask(this).runTaskTimer(this, 20, 5 * 60 * 20);
             if (!SpigotConfig.disabledAdvancements.contains("*")) {
-                new CriterionTriggersTask(this).runTaskTimer(this, 0, 5 * 60 * 20);
+                new CriterionTriggersTask(this).runTaskTimer(this, 20, 5 * 60 * 20);
             }
 
             if (getServer().getPluginManager().isPluginEnabled("Essentials")) {
-                new EssentialsTask(this).runTaskTimerAsynchronously(this, 0, 5 * 60 * 20);
+                new EssentialsTask(this).runTaskTimerAsynchronously(this, 20, 5 * 60 * 20);
             }
             if (getServer().getPluginManager().isPluginEnabled("AAC")
                     && getServer().getPluginManager().getPlugin("AAC").getDescription().getVersion().equals("4.4.2")) {
-                new AACTask(this).runTaskTimerAsynchronously(this, 0, 5 * 60 * 20);
+                new AACTask(this).runTaskTimerAsynchronously(this, 20, 5 * 60 * 20);
             }
         } catch (Throwable e) {
             e.printStackTrace();
