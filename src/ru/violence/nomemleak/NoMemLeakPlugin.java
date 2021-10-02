@@ -25,6 +25,9 @@ public class NoMemLeakPlugin extends JavaPlugin {
                     && getServer().getPluginManager().getPlugin("AAC").getDescription().getVersion().equals("4.4.2")) {
                 new AACTask(this).runTaskTimerAsynchronously(this, 20, 5 * 60 * 20);
             }
+            if (getServer().getPluginManager().isPluginEnabled("WorldGuard")) {
+                new WorldGuardMetaTask(this).runTaskTimer(this, 20, 5 * 60 * 20);
+            }
         } catch (Throwable e) {
             e.printStackTrace();
             setEnabled(false);
