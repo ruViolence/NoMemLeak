@@ -1,4 +1,4 @@
 name: NoMemLeak
 main: ru.violence.nomemleak.NoMemLeakPlugin
 version: 0.3.0
-softdepend: [AAC, Essentials, WorldGuard]
+softdepend: [AAC, WorldGuard]
