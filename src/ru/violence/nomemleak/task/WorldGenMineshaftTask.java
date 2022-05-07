@@ -79,11 +79,13 @@ public class WorldGenMineshaftTask extends BukkitRunnable {
         Long2ObjectMap<StructureStart> c = (Long2ObjectMap<StructureStart>) this.field_c_StructureGenerator.get(structureGenerator);
         Long2ObjectMap<StructureStart> allStructures = (Long2ObjectMap<StructureStart>) this.field_allStructures_StructureGenerator.get(structureGenerator);
 
-        cleared += a.a().map.size();
+        if (a != null) {
+            cleared += a.a().map.size();
+            a.a().map.clear();
+        }
         cleared += c.size();
         cleared += allStructures.size();
 
-        a.a().map.clear();
         c.clear();
         allStructures.clear();
 
